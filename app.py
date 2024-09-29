@@ -61,7 +61,7 @@ def scrape_snow_data(url):
 
 
 @app.route('/')
-def snow_report():
+def index():
     # URLs to scrape
     urls = [
         "https://www.snow-forecast.com/resorts/Grindelwald/6day/mid",
@@ -92,7 +92,7 @@ def snow_report():
             flattened_data.append((country, entry['location'], entry))
 
     # Render the sorted data in the HTML template
-    return render_template('snow_report.html', data=flattened_data)
+    return render_template('index.html', data=flattened_data)
     #Code to run the website python app.py  
 if __name__ == '__main__':
     app.run(debug=True)
