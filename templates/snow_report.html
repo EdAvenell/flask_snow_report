@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snow Report</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Snow Report</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th>Location</th>
+                <th>Distance</th> <!-- Will update this column with data from the Google Sheet -->
+                <th>Driving time</th> <!-- Will update this column with data from the Google Sheet -->
+                <th>Top Temperature</th>
+                <th>Middle Temperature</th>
+                <th>Fresh Snow</th>
+                <th>New Snow</th>
+                <th>New Snow Date</th>
+                <th>Top Snow Depth</th>
+            </tr>
+        </thead>
+        <tbody id="snow-data-table">
+            <!-- This data will be populated by your web scraping code -->
+            {% for country, location, snow_data in data %}
+            <tr data-location="{{ location }}">
+                <td>{{ country }}</td>
+                <td>{{ location }}</td>
+                <td class="distance">Loading...</td> <!-- We'll replace this with distance from the Google Sheet -->
+                <td class="travel-time">Loading...</td> <!-- We'll replace this with distance from the Google Sheet -->
+                <td>{{ snow_data['top_temperature'] }}</td>
+                <td>{{ snow_data['middle_temperature'] }}</td>
+                <td>{{ snow_data['fresh_snow'] }}</td>
+                <td>{{ snow_data['new_snow'] }}</td>
+                <td>{{ snow_data['new_snow_date'] }}</td>
+                <td>{{ snow_data['top_snow_depth'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS8pFwP5dYT48iw9fmrHmEyoz2bz68nBUrrMNpmTo2223LKfdH7TSTrBZFrk4wL-QwUqnYYhlTWwwLN/pub?output=csv';
+    
+        fetch(csvUrl)
+            .then(response => response.text())
+            .then(data => {
+                // Parse the CSV data into rows and columns
+                const rows = data.trim().split('\n').map(row => row.split(','));
+    
+                // Debugging: Log CSV rows to check if they're loaded correctly
+                console.log("CSV rows:", rows);
+    
+                // Select all rows from the snow report table that have a "data-location" attribute
+                const tableRows = document.querySelectorAll('#snow-data-table tr[data-location]');
+    
+                // Loop through each table row to update the distance and travel time
+                tableRows.forEach(row => {
+                    const location = row.getAttribute('data-location').trim();
+                    const distanceCell = row.querySelector('.distance');
+                    const travelTimeCell = row.querySelector('.travel-time');
+    
+                    // Debugging: Log the table row location
+                    console.log("Checking location:", location);
+    
+                    // Reset cells for safety
+                    distanceCell.innerHTML = '-';
+                    travelTimeCell.textContent = '-';
+    
+                    // Find matching location in CSV
+                    const matchedRow = rows.find(csvRow => csvRow[0].trim() === location);
+    
+                    if (matchedRow) {
+                        const distance = matchedRow[1].trim();    // Column B in CSV (Distance)
+                        const travelTime = matchedRow[2].trim();  // Column C in CSV (Driving Time)
+                        const url = matchedRow[3].trim();          // Column D in CSV (URL)
+    
+                        // Debugging: Log matched row
+                        console.log(`Matched ${location}: Distance = ${distance}, Travel Time = ${travelTime}, URL = ${url}`);
+    
+                        // Create hyperlink for distance
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';  // Open in new tab
+                        link.textContent = `${distance} km`;
+                        distanceCell.innerHTML = ''; // Clear previous content
+                        distanceCell.appendChild(link); // Append the link
+    
+                        // Update travel time cell
+                        travelTimeCell.textContent = travelTime;
+                    } else {
+                        // Debugging: Log when no match is found
+                        console.log(`No match found for ${location}`);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching CSV:', error);
+            });
+    </script>
+    
+    
+    
+    
